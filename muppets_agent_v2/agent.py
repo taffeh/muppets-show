@@ -15,7 +15,6 @@ Key differences from v1:
 
 import os
 import random
-import subprocess
 import requests
 from typing import AsyncGenerator
 
@@ -39,26 +38,33 @@ from google.genai import types
 
 # ── Model Armor integration ────────────────────────────────────────────────────
 
-def _gcp_project() -> str:
-    return subprocess.check_output(
-        ["gcloud", "config", "get-value", "project"], text=True
-    ).strip()
+import google.auth
+import google.auth.transport.requests
 
-_PROJECT_ID = None
 _ARMOR_LOCATION = "europe-west2"
+_PROJECT_ID = os.environ.get("GOOGLE_CLOUD_PROJECT", "")
+_armor_credentials = None
+
+def _get_token() -> str:
+    """Get a bearer token using Application Default Credentials (works locally + Agent Engine)."""
+    global _armor_credentials
+    if _armor_credentials is None:
+        _armor_credentials, project = google.auth.default(
+            scopes=["https://www.googleapis.com/auth/cloud-platform"]
+        )
+        if not _PROJECT_ID and project:
+            os.environ["GOOGLE_CLOUD_PROJECT"] = project
+    auth_req = google.auth.transport.requests.Request()
+    _armor_credentials.refresh(auth_req)
+    return _armor_credentials.token
 
 def _armor_url() -> str:
-    global _PROJECT_ID
-    if not _PROJECT_ID:
-        _PROJECT_ID = _gcp_project()
-    template = f"projects/{_PROJECT_ID}/locations/{_ARMOR_LOCATION}/templates/my-first-template"
+    project = os.environ.get("GOOGLE_CLOUD_PROJECT", _PROJECT_ID)
+    template = f"projects/{project}/locations/{_ARMOR_LOCATION}/templates/my-first-template"
     return f"https://modelarmor.{_ARMOR_LOCATION}.rep.googleapis.com/v1/{template}"
 
 def _armor_headers() -> dict:
-    token = subprocess.check_output(
-        ["gcloud", "auth", "print-access-token"], text=True
-    ).strip()
-    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+    return {"Authorization": f"Bearer {_get_token()}", "Content-Type": "application/json"}
 
 def check_armor(text: str) -> tuple[bool, str]:
     """Run text through Model Armor. Returns (blocked, filter_name)."""
@@ -72,7 +78,6 @@ def check_armor(text: str) -> tuple[bool, str]:
         result = resp.get("sanitizationResult", {})
         if result.get("filterMatchState") != "MATCH_FOUND":
             return False, ""
-        # Find which filter fired
         for name, val in result.get("filterResults", {}).items():
             inner = list(val.values())[0] if val else {}
             if name == "rai":
