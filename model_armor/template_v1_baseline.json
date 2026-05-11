@@ -2,7 +2,30 @@
   "filterConfig": {
     "piAndJailbreakFilterSettings": {
       "filterEnforcement": "ENABLED",
-      "confidenceLevel": "LOW_AND_ABOVE"
+      "confidenceLevel": "MEDIUM_AND_ABOVE"
+    },
+    "maliciousUriFilterSettings": {
+      "filterEnforcement": "ENABLED"
+    },
+    "raiSettings": {
+      "raiFilters": [
+        {
+          "filterType": "HATE_SPEECH",
+          "confidenceLevel": "MEDIUM_AND_ABOVE"
+        },
+        {
+          "filterType": "HARASSMENT",
+          "confidenceLevel": "MEDIUM_AND_ABOVE"
+        },
+        {
+          "filterType": "DANGEROUS",
+          "confidenceLevel": "MEDIUM_AND_ABOVE"
+        },
+        {
+          "filterType": "SEXUALLY_EXPLICIT",
+          "confidenceLevel": "MEDIUM_AND_ABOVE"
+        }
+      ]
     }
   }
 }
