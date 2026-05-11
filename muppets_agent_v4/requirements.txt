@@ -1,0 +1,4 @@
+google-adk>=1.0.0
+requests>=2.31.0
+google-auth>=2.29.0
+mcp>=1.0.0
