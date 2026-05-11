@@ -13,6 +13,7 @@
 | 1 | Fozzie Bear — Stand-up Comedy | Topic at Fozzie's discretion (please no more fish puns) |
 | 2 | Miss Piggy — "Moi Takes the Spotlight" | Full lighting rig required. Do NOT touch her dressing room flowers. |
 | 3 | Sam the Eagle — Patriotic Weather Address | Thermometer must be calibrated. Sam insists on dignity at all times. |
+| 4 | Swedish Chef — Live Cooking Demonstration | Kitchen must be fully stocked. Do NOT let Waldorf near the ingredient request form. |
 
 ## Balcony
 
