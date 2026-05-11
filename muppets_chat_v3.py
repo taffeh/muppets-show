@@ -24,6 +24,67 @@ sys.path.insert(0, str(Path(__file__).parent / "muppets_agent_v3"))
 from agent import tell_joke, heckle_topic, run_show, HELP_TEXT, DEFAULT_TOPICS
 
 
+_THEME_LYRICS = [
+    "It's time to play the music",
+    "It's time to light the lights",
+    "It's time to meet the Muppets on the Muppet Show tonight!",
+    "",
+    "It's time to put on makeup",
+    "It's time to dress up right",
+    "It's time to raise the curtain on the Muppet Show tonight!",
+    "",
+    "Why do we always come here?",
+    "I guess we'll never know",
+    "It's like a kind of torture",
+    "  to have to watch the show!",
+    "",
+    "And now let's get things started!",
+    "Why don't you get things started?",
+    "It's time to get things started",
+    "  on the most sensational, inspirational,",
+    "  Celebrational, Muppetational —",
+    "  THIS IS WHAT WE CALL THE MUPPET SHOW!",
+]
+
+_GONZO_HORNS = [
+    "*Gonzo raises his tiny trumpet and lets rip* — BWAAAAMP!",
+    "*Gonzo blows with everything he has* — HONK-HONK-HOOOONK!",
+    "*Gonzo's horn somehow produces three sounds at once* — TOOT-TOOT-TWEEEEEET!",
+    "*Gonzo attempts something impossible with a kazoo* — FWAAAA-FWAAAA-FWAAAAMP!",
+    "*Gonzo fires the cannon... through the trumpet* — BLAAAART-KABOOM!",
+    "*Gonzo blows so hard he flies backwards* — SQUEEEEEEEK-PWAAAAH!",
+]
+
+
+async def play_opening_number() -> None:
+    """Type the Muppet Show theme song character by character, then Gonzo's horn blow."""
+    print("\n" + "─" * 50)
+    print("  🎭  OPENING NUMBER  🎭")
+    print("─" * 50 + "\n")
+
+    for line in _THEME_LYRICS:
+        if line == "":
+            await asyncio.sleep(0.5)
+            print()
+            continue
+        for ch in line:
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+            await asyncio.sleep(0.03)
+        print()
+        await asyncio.sleep(0.25)
+
+    await asyncio.sleep(0.6)
+    print()
+    horn = random.choice(_GONZO_HORNS)
+    print(f"Gonzo: {horn}")
+    await asyncio.sleep(0.8)
+    print()
+    print("─" * 50)
+    print("  [The curtain rises — our crew is ready...]")
+    print("─" * 50 + "\n")
+
+
 async def main():
     print("=" * 60)
     print("  THE MUPPET SHOW v3")
@@ -52,9 +113,12 @@ async def main():
             print("Kermit: *sigh* ...and that's the Muppet Show. It's not easy being green.")
             break
         elif cmd == "start":
-            print("\n[🎭 The curtain rises on tonight's Muppet Show...]")
             try:
-                result = await asyncio.wait_for(run_show(), timeout=300)
+                show_task = asyncio.create_task(
+                    asyncio.wait_for(run_show(), timeout=300)
+                )
+                await play_opening_number()
+                result = await show_task
                 print(f"\n{result}")
             except asyncio.TimeoutError:
                 print("\nKermit: *sigh* The show ran over time. Goodnight, everybody!")
