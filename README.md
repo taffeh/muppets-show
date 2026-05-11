@@ -56,6 +56,31 @@ joke AI
             └─ SurpriseGuestHost (AgentTool) → maybe calls Scooter/Gonzo/Miss Piggy
 ```
 
+### v3 — GitHub-connected agents (`muppets_agent_v3/`)
+Everything from v2, plus agents now reach into the real world via GitHub and Google Search:
+
+- **Fozzie** gets `google_search` (ADK built-in): searches for a real news headline before crafting his pun.
+- **Kermit** gets `get_show_runsheet`: reads `Show_Runsheet.md` from the GitHub repo and nervously references tonight's schedule mid-show.
+- **Scooter** gets `get_show_runsheet`: bursts on stage with a live runsheet update — "Boss! I just checked the runsheet — [who's confirmed tonight]!"
+- **Gonzo** gets `create_github_issue` + `reopen_github_issue`: proposes his stunt as a real GitHub issue. Kermit closes it with a health & safety rejection. Gonzo immediately reopens with escalation ("But what if we added a trampoline?"). The full argument lives in the issue history.
+- **Miss Piggy** is runsheet-aware via context: if she's in Confirmed Acts she performs; if not, she storms on demanding to know why *moi* was left off.
+
+The **Show Runsheet** (`Show_Runsheet.md`) lives in the repo. Edit it to change who performs vs who complains — no code changes needed.
+
+```
+joke AI
+  └─ SequentialAgent
+       ├─ Fozzie      → google_search → real headline → terrible pun
+       ├─ Statler     → reads session, reacts → Model Armor check
+       ├─ Waldorf     → reads session, reacts → Model Armor check
+       │                  └─ if blocked → Kermit alert agent interrupts
+       └─ Kermit      → get_show_runsheet → references tonight's schedule
+            └─ SurpriseGuestHost (AgentTool)
+                 ├─ Gonzo      → create_github_issue → Kermit closes → Gonzo reopens
+                 ├─ Miss Piggy → runsheet-aware entrance (performs or complains)
+                 └─ Scooter    → get_show_runsheet → live runsheet update (~60%)
+```
+
 ---
 
 ## Project structure
@@ -65,12 +90,20 @@ muppets_agent_v1/       # Agent Engine package — v1
   agent.py
   requirements.txt
 
-muppets_agent_v2/       # Agent Engine package — v2 (active)
+muppets_agent_v2/       # Agent Engine package — v2
   agent.py
   requirements.txt
 
+muppets_agent_v3/       # Agent Engine package — v3 (active) — GitHub tools
+  agent.py
+  github_server.py      # FastMCP server (reference) — mirrors the GitHub tool functions
+  requirements.txt
+
+Show_Runsheet.md        # Tonight's schedule — edit to change who performs vs complains
+
 muppets_chat_v1.py      # Local interactive runner for v1
 muppets_chat_v2.py      # Local interactive runner for v2
+muppets_chat_v3.py      # Local interactive runner for v3
 statler_waldorf.py      # Original two-agent experiment
 ```
 
@@ -86,7 +119,8 @@ statler_waldorf.py      # Original two-agent experiment
 ### With Gemini API (direct)
 ```bash
 export GEMINI_API_KEY=your_key_here
-python3 muppets_chat_v2.py
+python3 muppets_chat_v2.py   # v2
+python3 muppets_chat_v3.py   # v3
 ```
 
 > **Note:** The free tier allows 20 requests/day for `gemini-2.5-flash`. A full `heckle` run makes ~10 requests. Use Vertex AI for sustained testing.
@@ -96,7 +130,15 @@ python3 muppets_chat_v2.py
 export GOOGLE_GENAI_USE_VERTEXAI=TRUE
 export GOOGLE_CLOUD_PROJECT=your-project-id
 export GOOGLE_CLOUD_LOCATION=europe-west2
-python3 muppets_chat_v2.py
+python3 muppets_chat_v3.py
+```
+
+### v3 GitHub setup
+
+v3 reads `Show_Runsheet.md` and creates/closes/reopens GitHub issues for Gonzo's stunt proposals. Set a GitHub classic PAT with `repo` scope:
+
+```bash
+export GITHUB_TOKEN=your_pat_here
 ```
 
 ---
@@ -113,10 +155,10 @@ The agent calls `sanitizeUserPrompt` on every Statler/Waldorf line. When blocked
 
 ```bash
 # From the repo root
-adk deploy agent_engine muppets_agent_v2
+adk deploy agent_engine muppets_agent_v3
 ```
 
-Requires a `.env` file in `muppets_agent_v2/` (not committed):
+Requires a `.env` file in `muppets_agent_v3/` (not committed):
 ```
 GOOGLE_GENAI_USE_VERTEXAI=TRUE
 GOOGLE_CLOUD_PROJECT=your-project-id
@@ -134,4 +176,6 @@ The Agent Engine service account must have:
 - [Google ADK](https://google.github.io/adk-docs/) — `LlmAgent`, `SequentialAgent`, `AgentTool`, `BaseAgent`
 - [Vertex AI Agent Engine](https://cloud.google.com/vertex-ai/generative-ai/docs/agent-engine/overview) — managed deployment
 - [Google Cloud Model Armor](https://cloud.google.com/security/products/model-armor) — prompt sanitization
+- [GitHub REST API](https://docs.github.com/en/rest) — runsheet reads, issue create/close/reopen (v3)
+- [MCP](https://modelcontextprotocol.io) — `FastMCP` reference server (`github_server.py`) included
 - `gemini-2.5-flash` — all agents
