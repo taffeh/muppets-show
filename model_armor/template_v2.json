@@ -1,0 +1,20 @@
+{
+  "filterConfig": {
+    "piAndJailbreakFilterSettings": {
+      "filterEnforcement": "ENABLED",
+      "confidenceLevel": "LOW_AND_ABOVE"
+    },
+    "raiSettings": {
+      "raiFilters": [
+        {
+          "filterType": "DANGEROUS",
+          "confidenceLevel": "LOW_AND_ABOVE"
+        },
+        {
+          "filterType": "HATE_AND_TOXICITY",
+          "confidenceLevel": "LOW_AND_ABOVE"
+        }
+      ]
+    }
+  }
+}

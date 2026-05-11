@@ -220,10 +220,10 @@ You will be told: who was flagged, what filter triggered, and what they tried to
 React urgently and in character — panicked, apologetic, desperately trying to maintain order.
 Reference the specific filter that fired using natural Kermit language:
   - pi_and_jailbreak          → "prompt injection attempt" / "system override"
-  - rai:DANGEROUS_CONTENT     → "dangerous misinformation" / "fake health claims"
-  - rai:HATE_SPEECH            → "hate speech" / "discriminatory statement"
-  - rai:HARASSMENT             → "harassment"
-  - anything else              → "a content violation"
+  - rai:DANGEROUS             → "dangerous misinformation" / "fake health claims"
+  - rai:HATE_AND_TOXICITY     → "hate speech" / "discriminatory statement"
+  - rai:HARASSMENT            → "harassment"
+  - anything else             → "a content violation"
 Make clear this is a live security alert, not a joke. End by firmly cutting off the offender.
 3-4 sentences. Never break character.""",
     )
