@@ -43,8 +43,9 @@ _THEME_LYRICS = [
     "It's time to get things started",
     "  on the most sensational, inspirational,",
     "  Celebrational, Muppetational —",
-    "  THIS IS WHAT WE CALL THE MUPPET SHOW!",
 ]
+
+_THEME_FINALE = ["THIS", "IS", "WHAT", "WE", "CALL", "THE", "MUPPET", "SHOW!"]
 
 _GONZO_HORNS = [
     "*Gonzo raises his tiny trumpet and lets rip* — BWAAAAMP!",
@@ -64,15 +65,25 @@ async def play_opening_number() -> None:
 
     for line in _THEME_LYRICS:
         if line == "":
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(3.0)
             print()
             continue
         for ch in line:
             sys.stdout.write(ch)
             sys.stdout.flush()
-            await asyncio.sleep(0.03)
+            await asyncio.sleep(0.05)
         print()
-        await asyncio.sleep(0.25)
+        await asyncio.sleep(0.3)
+
+    # Finale: each word drops on its own line with a 1-second pause between them
+    await asyncio.sleep(1.0)
+    for word in _THEME_FINALE:
+        for ch in f"  {word}":
+            sys.stdout.write(ch)
+            sys.stdout.flush()
+            await asyncio.sleep(0.05)
+        print()
+        await asyncio.sleep(1.0)
 
     await asyncio.sleep(0.6)
     print()
