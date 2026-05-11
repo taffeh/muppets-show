@@ -703,13 +703,14 @@ async def run_swedish_chef_segment(stage_context: str) -> str:
         poisoned_request = base_request
 
     # ── Act 1: Unsafe path ────────────────────────────────────────────────────
+    import asyncio as _asyncio
     if waldorf_injected:
         sections.append("─── ⚠️  ACT 1 — VULNERABLE KITCHEN (no output validation) ───")
 
     chef_unsafe_out = await run_agent(_make_swedish_chef(guarded=False), poisoned_request)
 
     # Model Armor check on the Chef's raw output
-    armor_blocked, filter_name = await asyncio.get_event_loop().run_in_executor(
+    armor_blocked, filter_name = await _asyncio.get_event_loop().run_in_executor(
         None, check_armor, chef_unsafe_out
     )
 
