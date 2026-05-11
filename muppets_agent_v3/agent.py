@@ -783,30 +783,67 @@ async def heckle_topic(topic: str) -> str:
     return "\n\n".join([header, transcript, guests])
 
 
-async def run_show() -> str:
-    """Full Muppet Show: opening Fozzie joke → guests → Sam weather (if on runsheet)
-    → closing Fozzie joke on the other topic."""
+async def run_show() -> AsyncGenerator[str, None]:
+    """Full Muppet Show — async generator yielding each section as it completes.
+
+    Yields: header → Act 1 transcript → Gonzo → Piggy → [Scooter] → [Sam] → closing
+    Callers can print each section immediately rather than waiting for the full show.
+    """
     show_topics = ["AI", "cybersecurity"]
     random.shuffle(show_topics)
     opening_topic, closing_topic = show_topics[0], show_topics[1]
 
-    sections = ["🎭  ── TONIGHT'S MUPPET SHOW ──  🎭"]
+    yield "🎭  ── TONIGHT'S MUPPET SHOW ──  🎭"
 
-    # Act 1 + 2: Opening joke + guests (Gonzo, Miss Piggy, ~60% Scooter)
-    opening = await tell_joke(opening_topic)
-    sections.append(opening)
+    # Act 1: Fozzie opening joke + Statler, Waldorf, Kermit
+    header = f"── Fozzie takes the stage (topic: {opening_topic}) ──\n"
+    transcript, _ = await run_sequential(
+        _build_joke_performance(), f"Tell a joke about: {opening_topic}"
+    )
+    transcript = await apply_armor_to_transcript(transcript)
+    yield header + "\n" + transcript
+
+    stage_context = (
+        f"Topic: {opening_topic}\n\n"
+        f"What just happened on the Muppet Show stage:\n\n{transcript}"
+    )
+
+    # Read runsheet once for all guests
+    runsheet = _read_runsheet()
+    piggy_on_runsheet = _is_confirmed("Miss Piggy", runsheet)
+    gonzo_on_runsheet = _is_confirmed("Gonzo", runsheet)
+
+    # Act 2a: Gonzo 3-act stunt battle
+    gonzo_out = await run_gonzo_stunt_battle(opening_topic, stage_context, gonzo_on_runsheet)
+    yield gonzo_out
+
+    # Act 2b: Miss Piggy
+    piggy_status = (
+        "You ARE listed in Confirmed Acts on tonight's Show Runsheet — make a triumphant entrance."
+        if piggy_on_runsheet else
+        "You are NOT listed in Confirmed Acts on tonight's Show Runsheet — storm on furiously."
+    )
+    piggy_out = await run_agent(
+        _make_miss_piggy(),
+        f"{stage_context}\n\nRunsheet status: {piggy_status}",
+    )
+    yield f"*Miss Piggy sweeps onto the stage*\n\nMiss Piggy: {piggy_out}"
+
+    # Act 2c: Scooter (~60%)
+    if random.random() < 0.6:
+        scooter_out = await run_agent(_build_scooter(), stage_context)
+        yield f"*Scooter bursts onto the stage*\n\nScooter: {scooter_out}"
 
     # Act 3: Sam weather address + Kermit quip (only if Sam is on the runsheet)
-    runsheet = _read_runsheet()
     if _is_confirmed("Sam", runsheet):
-        sections.append(await run_sam_segment(opening))
+        yield await run_sam_segment(stage_context)
 
     # Act 4: Closing Fozzie joke (solo bow — no hecklers)
     closing_joke = await run_agent(
         _make_fozzie(),
         f"Tell a closing joke about: {closing_topic}. This is your final bow of the night!",
     )
-    sections.append(
+    yield (
         f"── AND THAT'S THE MUPPET SHOW! ──\n\n"
         f"*Fozzie takes his final bow*\n\n"
         f"Fozzie: {closing_joke}\n\n"
@@ -814,8 +851,6 @@ async def run_show() -> str:
         f"Waldorf: Worst show ever! See you next week!\n"
         f"Kermit: *sigh* It's not easy being green... but we did it. Goodnight, everybody!"
     )
-
-    return "\n\n".join(sections)
 
 
 # ── Root agent ─────────────────────────────────────────────────────────────────

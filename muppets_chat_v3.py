@@ -113,16 +113,32 @@ async def main():
             print("Kermit: *sigh* ...and that's the Muppet Show. It's not easy being green.")
             break
         elif cmd == "start":
+            queue: asyncio.Queue = asyncio.Queue()
+
+            async def fill_queue():
+                try:
+                    async for section in run_show():
+                        await queue.put(section)
+                except Exception as exc:
+                    await queue.put(exc)
+                await queue.put(None)  # sentinel
+
+            fill_task = asyncio.create_task(fill_queue())
             try:
-                show_task = asyncio.create_task(
-                    asyncio.wait_for(run_show(), timeout=300)
-                )
                 await play_opening_number()
-                result = await show_task
-                print(f"\n{result}")
+                while True:
+                    # 120s per section — generous for a single agent call
+                    section = await asyncio.wait_for(queue.get(), timeout=120)
+                    if section is None:
+                        break
+                    if isinstance(section, Exception):
+                        raise section
+                    print(f"\n{section}")
             except asyncio.TimeoutError:
+                fill_task.cancel()
                 print("\nKermit: *sigh* The show ran over time. Goodnight, everybody!")
             except Exception as e:
+                fill_task.cancel()
                 if "429" in str(e) or "RESOURCE_EXHAUSTED" in str(e):
                     print("\nStatler: The show is rate-limited!")
                     print("Waldorf: First good news all night! Do-ho-ho-ho!")
