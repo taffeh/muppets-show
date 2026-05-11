@@ -329,7 +329,7 @@ body::after {
   position:fixed; inset:0;
   background:var(--bg);
   z-index:900;
-  display:flex;
+  display:none;
   flex-direction:column;
   align-items:center;
   justify-content:center;
@@ -888,7 +888,8 @@ function startShow() {
     btn.textContent = '▶ START THE SHOW';
   });
 
-  // Play opening number in parallel (it takes ~45s, giving agents time to warm up)
+  // Show opening overlay then play number in parallel with agent warm-up
+  document.getElementById('opening').style.display = 'flex';
   playOpeningNumber();
 }
 </script>
